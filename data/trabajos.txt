@@ -1,0 +1,2 @@
+1;1;1;aire;;27/06/2026;11:00;Pendiente;1000.0;Pagado;Efectivo
+2;2;1;eléctrico;;;;Pendiente;0.0;Pendiente;
