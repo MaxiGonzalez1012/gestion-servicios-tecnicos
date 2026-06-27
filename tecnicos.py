@@ -6,8 +6,8 @@ from data import database
 # ============================================================
 
 def agregar_tecnico(id_actual):
-    print('')
-    print('--- NUEVO TÉCNICO ---')
+    utilidades.printPausa('')
+    utilidades.printPausa('--- NUEVO TÉCNICO ---')
     nombre = input("Nombre: ").strip().title()
     especialidad = utilidades.pedir_opcion("Especialidad:",
                                 ["refrigeración", "eléctrica", "trabajos simples"])
@@ -20,19 +20,19 @@ def agregar_tecnico(id_actual):
         "disponible": disponible,
     }
     database.listTecnicos.append(tecnico)
-    print("Técnico agregado con ID", id_actual)
+    utilidades.printPausa("Técnico agregado con ID", id_actual)
     return id_actual + 1
 
 
 def listar_tecnicos():
-    print('')
-    print('--- LISTA DE TÉCNICOS ---')
+    utilidades.printPausa('')
+    utilidades.printPausa('--- LISTA DE TÉCNICOS ---')
     if not database.listTecnicos:
-        print("No hay técnicos cargados.")
+        utilidades.printPausa("No hay técnicos cargados.")
         return
     for t in database.listTecnicos:
         disp = "disponible" if t["disponible"] else "ocupado"
-        print("[", t["id"], "]", t["nombre"], "-", t["especialidad"], "(", disp, ")")
+        utilidades.printPausa("[", t["id"], "]", t["nombre"], "-", t["especialidad"], "(", disp, ")")
 
 
 def editar_tecnico():
@@ -40,7 +40,7 @@ def editar_tecnico():
     id_buscado = utilidades.pedir_id("\nID del técnico a editar: ")
     tecnico = utilidades.buscar_por_id(database.listTecnicos, id_buscado)
     if tecnico is None:
-        print("No existe un técnico con ese ID.")
+        utilidades.printPausa("No existe un técnico con ese ID.")
         return
     nuevo_nombre = input("Nombre [" + tecnico["nombre"] + "] (Enter mantiene): ").strip().title()
     if nuevo_nombre:
@@ -49,7 +49,7 @@ def editar_tecnico():
         tecnico["especialidad"] = utilidades.pedir_opcion("Nueva especialidad:",
                                                ["refrigeración", "eléctrica", "trabajos simples"])
     tecnico["disponible"] = utilidades.pedir_opcion("¿Disponible?", ["si", "no"]) == "si"
-    print("Técnico actualizado.")
+    utilidades.printPausa("Técnico actualizado.")
 
 
 def eliminar_tecnico():
@@ -57,10 +57,10 @@ def eliminar_tecnico():
     id_buscado = utilidades.pedir_id("\nID del técnico a eliminar: ")
     tecnico = utilidades.buscar_por_id(database.listTecnicos, id_buscado)
     if tecnico is None:
-        print("No existe un técnico con ese ID.")
+        utilidades.printPausa("No existe un técnico con ese ID.")
         return
     database.listTecnicos.remove(tecnico)
-    print("Técnico eliminado.")
+    utilidades.printPausa("Técnico eliminado.")
 
 
 def modulo_tecnicos(id_actual):

@@ -8,14 +8,14 @@ def limpiarConsola():
 # ============================================================
 # Pide al usuario elegir de una lista de opciones validas.
 def pedir_opcion(mensaje, opciones):
-    print(mensaje)
+    printPausa(mensaje)
     for i, op in enumerate(opciones, start=1):
-        print(" ", i, "-", op)
+        printPausa(" ", i, "-", op)
     while True:
         eleccion = input("Elegí una opción: ").strip()
         if eleccion.isdigit() and 1 <= int(eleccion) <= len(opciones):
             return opciones[int(eleccion) - 1]
-        print("Opción inválida, probá de nuevo.")
+        printPausa("Opción inválida, probá de nuevo.")
 
 
 # Devuelve el diccionario con ese id, o None si no existe.
@@ -35,7 +35,7 @@ def pedir_id(texto):
             return None
         if valor.isdigit():
             return int(valor)
-        print("Ingresá un número de ID, o Enter para cancelar.")
+        printPausa("Ingresá un número de ID, o Enter para cancelar.")
 
 
 # Valida que sean solo números, pero devuelve el valor como texto (str).
@@ -45,7 +45,7 @@ def pedir_entero(texto):
         valor = input(texto).strip()
         if valor.isdigit():
             return valor
-        print("Tenés que ingresar solo números. Probá de nuevo.")
+        printPausa("Tenés que ingresar solo números. Probá de nuevo.")
 
 
 # Pide un numero (puede tener decimales) y valida con un while.
@@ -55,4 +55,12 @@ def pedir_decimal(texto):
         try:
             return float(valor)
         except ValueError:
-            print("Tenés que ingresar un número válido. Probá de nuevo.")
+            printPausa("Tenés que ingresar un número válido. Probá de nuevo.")
+
+
+def printPausa(*args, sep=" ", end="\n", pausa=0.02):
+    texto = sep.join(str(arg) for arg in args)
+    for caracter in texto:
+        print(caracter, end="", flush=True)
+        time.sleep(pausa)
+    print(end=end, flush=True)

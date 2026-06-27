@@ -6,8 +6,8 @@ import utilidades
 # ============================================================
 
 def agregar_cliente(id_actual):
-    print('')
-    print('--- NUEVO CLIENTE ---')
+    utilidades.printPausa('')
+    utilidades.printPausa('--- NUEVO CLIENTE ---')
     nombre = input("Nombre (persona o empresa): ").strip().title()
     telefono = utilidades.pedir_entero("Teléfono (solo números): ")
     direccion = input("Dirección: ").strip().title()
@@ -25,20 +25,20 @@ def agregar_cliente(id_actual):
         "es_empresa": es_empresa,
     }
     database.listClientes.append(cliente)
-    print("Cliente agregado con ID", id_actual)
+    utilidades.printPausa("Cliente agregado con ID", id_actual)
     return id_actual + 1
 
 
 def listar_clientes():
-    print('')
-    print('--- LISTA DE CLIENTES ---')
+    utilidades.printPausa('')
+    utilidades.printPausa('--- LISTA DE CLIENTES ---')
     if not database.listClientes:
-        print("No hay clientes cargados.")
+        utilidades.printPausa("No hay clientes cargados.")
         return
     for c in database.listClientes:
         tipo = "EMPRESA" if c["es_empresa"] else "particular"
         piso = c["piso_depto"] if c["piso_depto"] else "-"
-        print("[", c["id"], "]", c["nombre"], "(", tipo, ") - Tel:",
+        utilidades.printPausa("[", c["id"], "]", c["nombre"], "(", tipo, ") - Tel:",
               c["telefono"], "-", c["direccion"], "-", piso)
 
 
@@ -47,9 +47,9 @@ def editar_cliente():
     id_buscado = utilidades.pedir_id("\nID del cliente a editar: ")
     cliente = utilidades.buscar_por_id(database.listClientes, id_buscado)
     if cliente is None:
-        print("No existe un cliente con ese ID.")
+        utilidades.printPausa("No existe un cliente con ese ID.")
         return
-    print("Dejá vacío (Enter) para mantener el valor actual.")
+    utilidades.printPausa("Dejá vacío (Enter) para mantener el valor actual.")
     nuevo_nombre = input("Nombre [" + cliente["nombre"] + "]: ").strip().title()
     if nuevo_nombre:
         cliente["nombre"] = nuevo_nombre
@@ -61,7 +61,7 @@ def editar_cliente():
     nuevo_piso = input("Piso/Depto [" + cliente["piso_depto"] + "]: ").strip()
     if nuevo_piso:
         cliente["piso_depto"] = nuevo_piso
-    print("Cliente actualizado.")
+    utilidades.printPausa("Cliente actualizado.")
 
 
 def eliminar_cliente():
@@ -69,17 +69,17 @@ def eliminar_cliente():
     id_buscado = utilidades.pedir_id("\nID del cliente a eliminar: ")
     cliente = utilidades.buscar_por_id(database.listClientes, id_buscado)
     if cliente is None:
-        print("No existe un cliente con ese ID.")
+        utilidades.printPausa("No existe un cliente con ese ID.")
         return
     # Aviso si tiene trabajos asociados
     asociados = [t for t in database.listTrabajos if t["id_cliente"] == id_buscado]
     if asociados:
-        print("Atención: este cliente tiene", len(asociados), "trabajo(s) asociado(s).")
+        utilidades.printPausa("Atención: este cliente tiene", len(asociados), "trabajo(s) asociado(s).")
         if utilidades.pedir_opcion("¿Eliminar igual?", ["si", "no"]) == "no":
-            print("Cancelado.")
+            utilidades.printPausa("Cancelado.")
             return
     database.listClientes.remove(cliente)
-    print("Cliente eliminado.")
+    utilidades.printPausa("Cliente eliminado.")
 
 
 def modulo_clientes(id_actual):

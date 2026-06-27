@@ -1,15 +1,16 @@
 from data import database
-import utilidades, clientes, trabajos, cobros, tecnicos, reportes
+import utilidades, clientes, trabajos, cobros, tecnicos, reportes, color
 
 # ============================================================
 #  PROGRAMA PRINCIPAL (menú)
 # ============================================================
 
 def main():
-    print("=" * 50)
-    print("  SISTEMA DE GESTIÓN - SERVICIOS TÉCNICOS")
-    print("=" * 50)
+    utilidades.limpiarConsola()
 
+    print(color.azul("=" * 50))
+    print(color.azul("  SISTEMA DE GESTIÓN - SERVICIOS TÉCNICOS"))
+    print(color.azul("=" * 50))
     # Cargo los datos guardados de sesiones anteriores (si los hay).
     database.cargar_todo()
 
@@ -46,12 +47,23 @@ def main():
                 input("Presione enter para continuar...")
                 utilidades.limpiarConsola()
             elif opcion == "Salir":
-                print("Cerrando el sistema. ¡Hasta luego!")
+                utilidades.printPausa("Cerrando el sistema. ¡Hasta luego!")
                 break
         
         except Exception as error:
-            print("Ocurrió un error inesperado:", error)
-            print("El sistema sigue funcionando.")
+            utilidades.printPausa("Ocurrió un error inesperado:", error)
+            utilidades.printPausa("El sistema sigue funcionando.")
+
+        except KeyboardInterrupt:
+            utilidades.limpiarConsola()
+            while True:
+                salir = input("¿Está seguro que desea interrumpir el programa? (S/N): ").strip().lower()
+                if salir in ("s", "n"):
+                    break
+                print("Por favor, ingrese un valor válido (S/N).")
+            if salir == "s":
+                utilidades.printPausa("Cerrando el programa...")
+                break
 
 
 if __name__ == "__main__":
