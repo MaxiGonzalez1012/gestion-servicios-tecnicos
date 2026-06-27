@@ -1,5 +1,5 @@
 from data import database
-import utilidades, clientes, trabajos, cobros, tecnicos, reportes, color
+import utilidades, clientes, trabajos, cobros, tecnicos, reportes
 
 # ============================================================
 #  PROGRAMA PRINCIPAL (menú)
@@ -8,9 +8,9 @@ import utilidades, clientes, trabajos, cobros, tecnicos, reportes, color
 def main():
     utilidades.limpiarConsola()
 
-    print(color.azul("=" * 50))
-    print(color.azul("  SISTEMA DE GESTIÓN - SERVICIOS TÉCNICOS"))
-    print(color.azul("=" * 50))
+    print("=" * 50)
+    print("  SISTEMA DE GESTIÓN - SERVICIOS TÉCNICOS")
+    print("=" * 50)
     # Cargo los datos guardados de sesiones anteriores (si los hay).
     database.cargar_todo()
 
