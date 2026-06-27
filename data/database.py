@@ -53,8 +53,6 @@ def leer_archivo(nombre_archivo):
 
 
 # Carga las tres listas desde los archivos al arrancar el programa.
-# OJO: del archivo todo viene como texto, por eso reconvierto
-# importe a numero (float) y es_empresa/disponible a booleano.
 def cargar_todo():
     for fila in leer_archivo(ARCHIVO_CLIENTES):
         listClientes.append({
@@ -90,8 +88,6 @@ def cargar_todo():
 
 
 # Devuelve el proximo ID a usar: el mayor ID de la lista + 1.
-# Si la lista esta vacia, arranca en 1. Sirve para que al cargar
-# datos viejos, los IDs nuevos no choquen con los existentes.
 def proximo_id(lista):
     if not lista:
         return 1
