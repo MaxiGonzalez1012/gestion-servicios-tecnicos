@@ -3,92 +3,56 @@ import time, os
 def limpiarConsola():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def validarInputs(tipo=str, prompt="", validador=lambda x: None):
+# ============================================================
+#  FUNCIONES AUXILIARES
+# ============================================================
+# Pide al usuario elegir de una lista de opciones validas.
+def pedir_opcion(mensaje, opciones):
+    print(mensaje)
+    for i, op in enumerate(opciones, start=1):
+        print(" ", i, "-", op)
     while True:
-        try:
-            valor = tipo(input(prompt))
-            error = validador(valor)
-            if not error:
-                return valor
-            prompt = error + " "
-        except ValueError:
-            print("Valor inválido.", end="")
+        eleccion = input("Elegí una opción: ").strip()
+        if eleccion.isdigit() and 1 <= int(eleccion) <= len(opciones):
+            return opciones[int(eleccion) - 1]
+        print("Opción inválida, probá de nuevo.")
 
-def elegirOpcion(prompt, listOpciones, preText = ""):
-    limpiarConsola()
 
+# Devuelve el diccionario con ese id, o None si no existe.
+def buscar_por_id(lista, id_buscado):
+    for elemento in lista:
+        if elemento["id"] == id_buscado:
+            return elemento
+    return None
+
+
+# Pide un numero entero (un id). Insiste si meten algo invalido,
+# pero un Enter vacio devuelve None para poder cancelar.
+def pedir_id(texto):
     while True:
-        if preText != "":
-            printPausa(preText, pausa=0.01)
+        valor = input(texto).strip()
+        if valor == "":
+            return None
+        if valor.isdigit():
+            return int(valor)
+        print("Ingresá un número de ID, o Enter para cancelar.")
 
-        for i in range(len(listOpciones)):
-            printPausa(f"{amarillo(f"{i + 1}.")} {listOpciones[i]}", pausa=0.001)
 
+# Valida que sean solo números, pero devuelve el valor como texto (str).
+# Así no se pierde un 0 al principio, por ejemplo en teléfonos tipo 011...
+def pedir_entero(texto):
+    while True:
+        valor = input(texto).strip()
+        if valor.isdigit():
+            return valor
+        print("Tenés que ingresar solo números. Probá de nuevo.")
+
+
+# Pide un numero (puede tener decimales) y valida con un while.
+def pedir_decimal(texto):
+    while True:
+        valor = input(texto).strip()
         try:
-            opcionIndice = int(input(prompt)) - 1
+            return float(valor)
         except ValueError:
-            opcionIndice = -1
-        
-        if opcionIndice >= 0 and opcionIndice < len(listOpciones):
-            break
-        else:
-            limpiarConsola()
-            print("ERROR: El número de opción debe ser una de las enumeradas.\n")
-
-    return opcionIndice
-
-def saludoFin():
-    limpiarConsola()
-    printPausa(f"Muchas gracias por usar nuestro programa!",pausa=0.01)
-
-    input(negrita(gris("Presione enter para continuar...")))
-
-def printPausa(texto, nuevaLinea=True, pausa = 0.02):
-    for caracter in texto:
-        print(caracter, end="", flush=True)
-        time.sleep(pausa)
-    if nuevaLinea:
-        print()
-
-COLORES = {
-    "negro": "\033[30m",
-    "rojo": "\033[31m",
-    "verde": "\033[32m",
-    "amarillo": "\033[33m",
-    "azul": "\033[34m",
-    "magenta": "\033[35m",
-    "cyan": "\033[36m",
-    "blanco": "\033[37m",
-    "gris": "\033[37m",
-    "rosa": "\033[35m",
-    "naranja": "\033[33m",
-    "marron": "\033[31m",
-    "verde_lima": "\033[32m",
-    "violeta": "\033[35m",
-    "celeste": "\033[36m",
-    "reset": "\033[0m",
-    "negrita": "\033[1m"
-}
-
-def color(texto, nombre_color):
-    codigo = COLORES.get(nombre_color.lower())
-    if codigo:
-        return f"{codigo}{texto}{COLORES['reset']}"
-    return texto
-
-def negro(texto): return color(texto, "negro")
-def rojo(texto): return color(texto, "rojo")
-def verde(texto): return color(texto, "verde")
-def amarillo(texto): return color(texto, "amarillo")
-def azul(texto): return color(texto, "azul")
-def magenta(texto): return color(texto, "magenta")
-def cyan(texto): return color(texto, "cyan")
-def blanco(texto): return color(texto, "blanco")
-def gris(texto): return color(texto, "gris")
-def rosa(texto): return color(texto, "rosa")
-def naranja(texto): return color(texto, "naranja")
-def marron(texto): return color(texto, "marron")
-def verde_lima(texto): return color(texto, "verde_lima")
-def violeta(texto): return color(texto, "violeta")
-def celeste(texto): return color(texto, "celeste")
-def negrita(texto): return f"{COLORES['negrita']}{texto}{COLORES['reset']}"
+            print("Tenés que ingresar un número válido. Probá de nuevo.")
