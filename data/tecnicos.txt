@@ -1,1 +1,3 @@
-1;Messi;refrigeración;True
+1;Martín López;refrigeración;True
+2;Sofía Martínez;eléctrica;True
+3;Diego Fernández;trabajos simples;False

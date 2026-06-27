@@ -1,2 +1,5 @@
-1;1;1;aire;;27/06/2026;11:00;Pendiente;1000.0;Pagado;Efectivo
-2;2;1;eléctrico;;;;Pendiente;0.0;Pendiente;
+1;1;1;aire;El aire acondicionado no enfría.;28/06/2026;09:00;Pendiente;0.0;Pendiente;
+2;2;2;eléctrico;Cambio de térmica principal.;29/06/2026;14:30;Realizado;35000.0;Pagado;Transferencia
+3;3;3;soporte;Instalación de impresora WiFi.;30/06/2026;10:00;Reprogramado;12000.0;Pendiente;
+4;4;2;eléctrico;Revisión de tablero general.;01/07/2026;08:30;Incompleto;18000.0;Pendiente;
+5;5;1;aire;Mantenimiento preventivo del equipo.;02/07/2026;16:00;Realizado;22000.0;Pagado;Efectivo

@@ -51,6 +51,7 @@ def main():
                 break
         
         except Exception as error:
+            utilidades.limpiarConsola()
             utilidades.printPausa("Ocurrió un error inesperado:", error)
             utilidades.printPausa("El sistema sigue funcionando.")
 

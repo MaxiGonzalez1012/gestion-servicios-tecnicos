@@ -1,3 +1,5 @@
-1;Aa;11;Aa11;;;False
-2;Julian;12123123;Aaaaa1234;1/b;;True
-3;Hola;111;132;1352435;15;True
+1;Juan Pérez;1123456789;Av. Rivadavia 1234;2A;Cliente frecuente;False
+2;Consorcio San Martín;1145678901;San Martín 450;;;True
+3;María Gómez;1133344455;Belgrano 890;;;False
+4;Oficinas Delta S.A.;1167890123;Av. Corrientes 2500;5;Solicita factura A;True
+5;Carlos Rodríguez;1155512345;México 780;PB;Llamar antes de ir;False
