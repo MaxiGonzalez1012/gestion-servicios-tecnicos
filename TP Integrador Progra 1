@@ -1,0 +1,633 @@
+# ---------- "Base de datos" en memoria ----------
+clientes = []
+trabajos = []
+tecnicos = []
+
+# Valores válidos (sacados del análisis - Módulo 2 y 3)
+estados = ["Pendiente", "Realizado", "Incompleto", "Reprogramado", "Cancelado"]
+estados_pago = ["Pagado", "Pendiente"]
+medios_pago = ["Efectivo", "Transferencia"]
+
+
+# ============================================================
+#  FUNCIONES AUXILIARES
+# ============================================================
+# Pide al usuario elegir de una lista de opciones validas.
+def pedir_opcion(mensaje, opciones):
+    print(mensaje)
+    for i, op in enumerate(opciones, start=1):
+        print(" ", i, "-", op)
+    while True:
+        eleccion = input("Elegí una opción: ").strip()
+        if eleccion.isdigit() and 1 <= int(eleccion) <= len(opciones):
+            return opciones[int(eleccion) - 1]
+        print("Opción inválida, probá de nuevo.")
+
+
+# Devuelve el diccionario con ese id, o None si no existe.
+def buscar_por_id(lista, id_buscado):
+    for elemento in lista:
+        if elemento["id"] == id_buscado:
+            return elemento
+    return None
+
+
+# Pide un numero entero (un id). Insiste si meten algo invalido,
+# pero un Enter vacio devuelve None para poder cancelar.
+def pedir_id(texto):
+    while True:
+        valor = input(texto).strip()
+        if valor == "":
+            return None
+        if valor.isdigit():
+            return int(valor)
+        print("Ingresá un número de ID, o Enter para cancelar.")
+
+
+# Valida que sean solo números, pero devuelve el valor como texto (str).
+# Así no se pierde un 0 al principio, por ejemplo en teléfonos tipo 011...
+def pedir_entero(texto):
+    while True:
+        valor = input(texto).strip()
+        if valor.isdigit():
+            return valor
+        print("Tenés que ingresar solo números. Probá de nuevo.")
+
+
+# Pide un numero (puede tener decimales) y valida con un while.
+def pedir_decimal(texto):
+    while True:
+        valor = input(texto).strip()
+        try:
+            return float(valor)
+        except ValueError:
+            print("Tenés que ingresar un número válido. Probá de nuevo.")
+
+
+# ============================================================
+#  PERSISTENCIA EN ARCHIVOS (CSV separado por ;)
+# ============================================================
+# Nombres de los tres archivos donde se guardan los datos.
+ARCHIVO_CLIENTES = "clientes.txt"
+ARCHIVO_TECNICOS = "tecnicos.txt"
+ARCHIVO_TRABAJOS = "trabajos.txt"
+
+
+# Guarda una lista de diccionarios en un archivo.
+# 'campos' es el orden en que se escriben las columnas.
+def guardar_lista(nombre_archivo, lista, campos):
+    with open(nombre_archivo, "w", encoding="utf-8") as f:
+        for elemento in lista:
+            # Convierto cada campo a texto y los uno con ;
+            valores = [str(elemento[c]) for c in campos]
+            f.write(";".join(valores) + "\n")
+
+
+# Guarda las tres listas. Se llama cada vez que algo cambia.
+def guardar_todo():
+    guardar_lista(ARCHIVO_CLIENTES, clientes,
+                  ["id", "nombre", "telefono", "direccion",
+                   "piso_depto", "observaciones", "es_empresa"])
+    guardar_lista(ARCHIVO_TECNICOS, tecnicos,
+                  ["id", "nombre", "especialidad", "disponible"])
+    guardar_lista(ARCHIVO_TRABAJOS, trabajos,
+                  ["id", "id_cliente", "id_tecnico", "tipo_servicio",
+                   "descripcion", "fecha", "horario", "estado",
+                   "importe", "estado_pago", "medio_pago"])
+
+
+# Lee un archivo y devuelve una lista de listas (cada linea separada por ;).
+# Si el archivo no existe todavia, devuelve una lista vacia.
+def leer_archivo(nombre_archivo):
+    filas = []
+    try:
+        with open(nombre_archivo, "r", encoding="utf-8") as f:
+            for linea in f:
+                linea = linea.strip()
+                if linea:  # ignoro lineas vacias
+                    filas.append(linea.split(";"))
+    except FileNotFoundError:
+        pass  # primera vez que se ejecuta: todavia no hay archivo
+    return filas
+
+
+# Carga las tres listas desde los archivos al arrancar el programa.
+# OJO: del archivo todo viene como texto, por eso reconvierto
+# importe a numero (float) y es_empresa/disponible a booleano.
+def cargar_todo():
+    for fila in leer_archivo(ARCHIVO_CLIENTES):
+        clientes.append({
+            "id": int(fila[0]),
+            "nombre": fila[1],
+            "telefono": fila[2],
+            "direccion": fila[3],
+            "piso_depto": fila[4],
+            "observaciones": fila[5],
+            "es_empresa": fila[6] == "True",
+        })
+    for fila in leer_archivo(ARCHIVO_TECNICOS):
+        tecnicos.append({
+            "id": int(fila[0]),
+            "nombre": fila[1],
+            "especialidad": fila[2],
+            "disponible": fila[3] == "True",
+        })
+    for fila in leer_archivo(ARCHIVO_TRABAJOS):
+        trabajos.append({
+            "id": int(fila[0]),
+            "id_cliente": int(fila[1]),
+            "id_tecnico": int(fila[2]),
+            "tipo_servicio": fila[3],
+            "descripcion": fila[4],
+            "fecha": fila[5],
+            "horario": fila[6],
+            "estado": fila[7],
+            "importe": float(fila[8]),
+            "estado_pago": fila[9],
+            "medio_pago": fila[10],
+        })
+
+
+# Devuelve el proximo ID a usar: el mayor ID de la lista + 1.
+# Si la lista esta vacia, arranca en 1. Sirve para que al cargar
+# datos viejos, los IDs nuevos no choquen con los existentes.
+def proximo_id(lista):
+    if not lista:
+        return 1
+    mayor = 0
+    for elemento in lista:
+        if elemento["id"] > mayor:
+            mayor = elemento["id"]
+    return mayor + 1
+
+
+# ============================================================
+#  MÓDULO 1: CLIENTES
+# ============================================================
+def agregar_cliente(id_actual):
+    print('')
+    print('--- NUEVO CLIENTE ---')
+    nombre = input("Nombre (persona o empresa): ").strip().title()
+    telefono = pedir_entero("Teléfono (solo números): ")
+    direccion = input("Dirección: ").strip().title()
+    piso_depto = input("Piso/Depto (Enter si no corresponde): ").strip()
+    observaciones = input("Observaciones: ").strip()
+    es_empresa = pedir_opcion("¿Es empresa/consorcio?", ["si", "no"]) == "si"
+
+    cliente = {
+        "id": id_actual,
+        "nombre": nombre,
+        "telefono": telefono,
+        "direccion": direccion,
+        "piso_depto": piso_depto,
+        "observaciones": observaciones,
+        "es_empresa": es_empresa,
+    }
+    clientes.append(cliente)
+    print("Cliente agregado con ID", id_actual)
+    return id_actual + 1
+
+
+def listar_clientes():
+    print('')
+    print('--- LISTA DE CLIENTES ---')
+    if not clientes:
+        print("No hay clientes cargados.")
+        return
+    for c in clientes:
+        tipo = "EMPRESA" if c["es_empresa"] else "particular"
+        piso = c["piso_depto"] if c["piso_depto"] else "-"
+        print("[", c["id"], "]", c["nombre"], "(", tipo, ") - Tel:",
+              c["telefono"], "-", c["direccion"], "-", piso)
+
+
+def editar_cliente():
+    listar_clientes()
+    id_buscado = pedir_id("\nID del cliente a editar: ")
+    cliente = buscar_por_id(clientes, id_buscado)
+    if cliente is None:
+        print("No existe un cliente con ese ID.")
+        return
+    print("Dejá vacío (Enter) para mantener el valor actual.")
+    nuevo_nombre = input("Nombre [" + cliente["nombre"] + "]: ").strip().title()
+    if nuevo_nombre:
+        cliente["nombre"] = nuevo_nombre
+    if pedir_opcion("¿Cambiar teléfono?", ["si", "no"]) == "si":
+        cliente["telefono"] = pedir_entero("Nuevo teléfono (solo números): ")
+    nueva_dir = input("Dirección [" + cliente["direccion"] + "]: ").strip().title()
+    if nueva_dir:
+        cliente["direccion"] = nueva_dir
+    nuevo_piso = input("Piso/Depto [" + cliente["piso_depto"] + "]: ").strip()
+    if nuevo_piso:
+        cliente["piso_depto"] = nuevo_piso
+    print("Cliente actualizado.")
+
+
+def eliminar_cliente():
+    listar_clientes()
+    id_buscado = pedir_id("\nID del cliente a eliminar: ")
+    cliente = buscar_por_id(clientes, id_buscado)
+    if cliente is None:
+        print("No existe un cliente con ese ID.")
+        return
+    # Aviso si tiene trabajos asociados
+    asociados = [t for t in trabajos if t["id_cliente"] == id_buscado]
+    if asociados:
+        print("Atención: este cliente tiene", len(asociados), "trabajo(s) asociado(s).")
+        if pedir_opcion("¿Eliminar igual?", ["si", "no"]) == "no":
+            print("Cancelado.")
+            return
+    clientes.remove(cliente)
+    print("Cliente eliminado.")
+
+
+def modulo_clientes(id_actual):
+    opcion = pedir_opcion("=== CLIENTES ===",
+                          ["Agregar", "Listar", "Editar", "Eliminar", "Volver"])
+    if opcion == "Agregar":
+        id_actual = agregar_cliente(id_actual)
+        guardar_todo()
+    elif opcion == "Listar":
+        listar_clientes()
+    elif opcion == "Editar":
+        editar_cliente()
+        guardar_todo()
+    elif opcion == "Eliminar":
+        eliminar_cliente()
+        guardar_todo()
+    return id_actual
+
+
+# ============================================================
+#  MÓDULO 4: TÉCNICOS
+# ============================================================
+def agregar_tecnico(id_actual):
+    print('')
+    print('--- NUEVO TÉCNICO ---')
+    nombre = input("Nombre: ").strip().title()
+    especialidad = pedir_opcion("Especialidad:",
+                                ["refrigeración", "eléctrica", "trabajos simples"])
+    disponible = pedir_opcion("¿Disponible?", ["si", "no"]) == "si"
+
+    tecnico = {
+        "id": id_actual,
+        "nombre": nombre,
+        "especialidad": especialidad,
+        "disponible": disponible,
+    }
+    tecnicos.append(tecnico)
+    print("Técnico agregado con ID", id_actual)
+    return id_actual + 1
+
+
+def listar_tecnicos():
+    print('')
+    print('--- LISTA DE TÉCNICOS ---')
+    if not tecnicos:
+        print("No hay técnicos cargados.")
+        return
+    for t in tecnicos:
+        disp = "disponible" if t["disponible"] else "ocupado"
+        print("[", t["id"], "]", t["nombre"], "-", t["especialidad"], "(", disp, ")")
+
+
+def editar_tecnico():
+    listar_tecnicos()
+    id_buscado = pedir_id("\nID del técnico a editar: ")
+    tecnico = buscar_por_id(tecnicos, id_buscado)
+    if tecnico is None:
+        print("No existe un técnico con ese ID.")
+        return
+    nuevo_nombre = input("Nombre [" + tecnico["nombre"] + "] (Enter mantiene): ").strip().title()
+    if nuevo_nombre:
+        tecnico["nombre"] = nuevo_nombre
+    if pedir_opcion("¿Cambiar especialidad?", ["si", "no"]) == "si":
+        tecnico["especialidad"] = pedir_opcion("Nueva especialidad:",
+                                               ["refrigeración", "eléctrica", "trabajos simples"])
+    tecnico["disponible"] = pedir_opcion("¿Disponible?", ["si", "no"]) == "si"
+    print("Técnico actualizado.")
+
+
+def eliminar_tecnico():
+    listar_tecnicos()
+    id_buscado = pedir_id("\nID del técnico a eliminar: ")
+    tecnico = buscar_por_id(tecnicos, id_buscado)
+    if tecnico is None:
+        print("No existe un técnico con ese ID.")
+        return
+    tecnicos.remove(tecnico)
+    print("Técnico eliminado.")
+
+
+def modulo_tecnicos(id_actual):
+    opcion = pedir_opcion("=== TÉCNICOS ===",
+                          ["Agregar", "Listar", "Editar", "Eliminar", "Volver"])
+    if opcion == "Agregar":
+        id_actual = agregar_tecnico(id_actual)
+        guardar_todo()
+    elif opcion == "Listar":
+        listar_tecnicos()
+    elif opcion == "Editar":
+        editar_tecnico()
+        guardar_todo()
+    elif opcion == "Eliminar":
+        eliminar_tecnico()
+        guardar_todo()
+    return id_actual
+
+
+# ============================================================
+#  MÓDULO 2: TRABAJOS
+# ============================================================
+def agregar_trabajo(id_actual):
+    print('')
+    print('--- NUEVO TRABAJO ---')
+    if not clientes:
+        print("Primero cargá al menos un cliente.")
+        return id_actual
+    if not tecnicos:
+        print("Primero cargá al menos un técnico.")
+        return id_actual
+
+    listar_clientes()
+    id_cli = pedir_id("ID del cliente: ")
+    if buscar_por_id(clientes, id_cli) is None:
+        print("Ese cliente no existe.")
+        return id_actual
+
+    listar_tecnicos()
+    id_tec = pedir_id("ID del técnico asignado: ")
+    if buscar_por_id(tecnicos, id_tec) is None:
+        print("Ese técnico no existe.")
+        return id_actual
+
+    tipo = pedir_opcion("Tipo de servicio:",
+                        ["aire", "eléctrico", "soporte"])
+    descripcion = input("Descripción del problema: ").strip()
+    fecha = input("Fecha (dd/mm/aaaa): ").strip()
+    horario = input("Horario: ").strip()
+
+    trabajo = {
+        "id": id_actual,
+        "id_cliente": id_cli,
+        "id_tecnico": id_tec,
+        "tipo_servicio": tipo,
+        "descripcion": descripcion,
+        "fecha": fecha,
+        "horario": horario,
+        "estado": "Pendiente",
+        # --- campos de cobro (Módulo 3) ---
+        "importe": 0.0,
+        "estado_pago": "Pendiente",
+        "medio_pago": "",
+    }
+    trabajos.append(trabajo)
+    print("Trabajo agregado con ID", id_actual)
+    return id_actual + 1
+
+
+def mostrar_trabajo(t):
+    cliente = buscar_por_id(clientes, t["id_cliente"])
+    tecnico = buscar_por_id(tecnicos, t["id_tecnico"])
+    nombre_cli = cliente["nombre"] if cliente else "(cliente borrado)"
+    nombre_tec = tecnico["nombre"] if tecnico else "(técnico borrado)"
+    print("[", t["id"], "]", t["tipo_servicio"].upper(), "-", nombre_cli,
+          "| Técnico:", nombre_tec, "|", t["fecha"], t["horario"])
+    print("     Problema:", t["descripcion"])
+    print("     Estado:", t["estado"], "| Pago:", t["estado_pago"],
+          "( $", t["importe"], ")", t["medio_pago"])
+
+
+def listar_trabajos():
+    print('')
+    print('--- LISTA DE TRABAJOS ---')
+    if not trabajos:
+        print("No hay trabajos cargados.")
+        return
+    for t in trabajos:
+        mostrar_trabajo(t)
+
+
+def editar_trabajo():
+    listar_trabajos()
+    id_buscado = pedir_id("\nID del trabajo a editar: ")
+    trabajo = buscar_por_id(trabajos, id_buscado)
+    if trabajo is None:
+        print("No existe un trabajo con ese ID.")
+        return
+    if pedir_opcion("¿Cambiar estado del trabajo?", ["si", "no"]) == "si":
+        trabajo["estado"] = pedir_opcion("Nuevo estado:", estados)
+    if pedir_opcion("¿Reasignar técnico?", ["si", "no"]) == "si":
+        listar_tecnicos()
+        id_tec = pedir_id("ID del nuevo técnico: ")
+        if buscar_por_id(tecnicos, id_tec):
+            trabajo["id_tecnico"] = id_tec
+        else:
+            print("Técnico inexistente, no se cambió.")
+    nueva_fecha = input("Fecha [" + trabajo["fecha"] + "] (Enter mantiene): ").strip()
+    if nueva_fecha:
+        trabajo["fecha"] = nueva_fecha
+    print("Trabajo actualizado.")
+
+
+def eliminar_trabajo():
+    listar_trabajos()
+    id_buscado = pedir_id("\nID del trabajo a eliminar: ")
+    trabajo = buscar_por_id(trabajos, id_buscado)
+    if trabajo is None:
+        print("No existe un trabajo con ese ID.")
+        return
+    trabajos.remove(trabajo)
+    print("Trabajo eliminado.")
+
+
+def modulo_trabajos(id_actual):
+    opcion = pedir_opcion("=== TRABAJOS ===",
+                          ["Agregar", "Listar", "Editar estado/datos",
+                           "Eliminar", "Volver"])
+    if opcion == "Agregar":
+        id_actual = agregar_trabajo(id_actual)
+        guardar_todo()
+    elif opcion == "Listar":
+        listar_trabajos()
+    elif opcion == "Editar estado/datos":
+        editar_trabajo()
+        guardar_todo()
+    elif opcion == "Eliminar":
+        eliminar_trabajo()
+        guardar_todo()
+    return id_actual
+
+
+# ============================================================
+#  MÓDULO 3: COBROS
+# ============================================================
+# Define cuanto se cobra por un trabajo.
+def registrar_importe():
+    listar_trabajos()
+    id_buscado = pedir_id("\nID del trabajo: ")
+    trabajo = buscar_por_id(trabajos, id_buscado)
+    if trabajo is None:
+        print("No existe un trabajo con ese ID.")
+        return
+    trabajo["importe"] = pedir_decimal("Importe a cobrar: ")
+    print("Importe registrado.")
+
+
+# Marca un trabajo como pagado e indica el medio.
+def registrar_pago():
+    pendientes = [t for t in trabajos if t["estado_pago"] == "Pendiente"]
+    if not pendientes:
+        print("No hay trabajos pendientes de cobro.")
+        return
+    print('')
+    print('--- TRABAJOS PENDIENTES DE COBRO ---')
+    for t in pendientes:
+        mostrar_trabajo(t)
+    id_buscado = pedir_id("\nID del trabajo cobrado: ")
+    trabajo = buscar_por_id(trabajos, id_buscado)
+    if trabajo is None or trabajo["estado_pago"] == "Pagado":
+        print("Trabajo inexistente o ya cobrado.")
+        return
+    trabajo["medio_pago"] = pedir_opcion("Medio de pago:", medios_pago)
+    trabajo["estado_pago"] = "Pagado"
+    print("Pago registrado. El trabajo sale de los pendientes.")
+
+
+# Liquidacion: todos los trabajos impagos de un cliente empresa.
+def cobros_pendientes_por_empresa():
+    empresas = [c for c in clientes if c["es_empresa"]]
+    if not empresas:
+        print("No hay clientes empresariales cargados.")
+        return
+    print('')
+    print('--- EMPRESAS ---')
+    for c in empresas:
+        print("[", c["id"], "]", c["nombre"])
+    id_cli = pedir_id("ID de la empresa: ")
+    cliente = buscar_por_id(clientes, id_cli)
+    if cliente is None:
+        print("Cliente inexistente.")
+        return
+    pendientes = [t for t in trabajos
+                  if t["id_cliente"] == id_cli and t["estado_pago"] == "Pendiente"]
+    if not pendientes:
+        print(cliente["nombre"], "no tiene trabajos pendientes de cobro.")
+        return
+    print('')
+    print("--- LIQUIDACIÓN:", cliente["nombre"], "---")
+    total = 0.0
+    for t in pendientes:
+        mostrar_trabajo(t)
+        total += t["importe"]
+    print('')
+    print("TOTAL A COBRAR: $", total)
+
+
+def modulo_cobros():
+    opcion = pedir_opcion("=== COBROS ===",
+                          ["Registrar importe de un trabajo",
+                           "Registrar pago",
+                           "Liquidación por empresa",
+                           "Volver"])
+    if opcion == "Registrar importe de un trabajo":
+        registrar_importe()
+        guardar_todo()
+    elif opcion == "Registrar pago":
+        registrar_pago()
+        guardar_todo()
+    elif opcion == "Liquidación por empresa":
+        cobros_pendientes_por_empresa()
+
+
+# ============================================================
+#  MÓDULO 5: REPORTES Y CONSULTAS
+# ============================================================
+def reporte_por_estado(estado):
+    filtrados = [t for t in trabajos if t["estado"] == estado]
+    print('')
+    print("--- TRABAJOS:", estado.upper(), "---")
+    if not filtrados:
+        print("No hay trabajos en este estado.")
+        return
+    for t in filtrados:
+        mostrar_trabajo(t)
+
+
+def reporte_cobros_pendientes():
+    pendientes = [t for t in trabajos if t["estado_pago"] == "Pendiente"]
+    print('')
+    print('--- COBROS PENDIENTES ---')
+    if not pendientes:
+        print("No hay cobros pendientes. ¡Todo cobrado!")
+        return
+    total = 0.0
+    for t in pendientes:
+        mostrar_trabajo(t)
+        total += t["importe"]
+    print('')
+    print("TOTAL PENDIENTE DE COBRO: $", total)
+
+
+def modulo_reportes():
+    opcion = pedir_opcion("=== REPORTES Y CONSULTAS ===",
+                          ["Trabajos pendientes",
+                           "Trabajos realizados",
+                           "Trabajos incompletos",
+                           "Trabajos reprogramados",
+                           "Cobros pendientes",
+                           "Volver"])
+    if opcion == "Trabajos pendientes":
+        reporte_por_estado("Pendiente")
+    elif opcion == "Trabajos realizados":
+        reporte_por_estado("Realizado")
+    elif opcion == "Trabajos incompletos":
+        reporte_por_estado("Incompleto")
+    elif opcion == "Trabajos reprogramados":
+        reporte_por_estado("Reprogramado")
+    elif opcion == "Cobros pendientes":
+        reporte_cobros_pendientes()
+
+
+# ============================================================
+#  PROGRAMA PRINCIPAL (menú)
+# ============================================================
+def Programa_principal():
+    print("=" * 50)
+    print("  SISTEMA DE GESTIÓN - SERVICIOS TÉCNICOS")
+    print("=" * 50)
+
+    # Cargo los datos guardados de sesiones anteriores (si los hay).
+    cargar_todo()
+
+    # Contadores para generar IDs únicos. Arrancan despues del ultimo
+    # ID que ya exista en los archivos, asi no se repiten.
+    id_cliente_actual = proximo_id(clientes)
+    id_tecnico_actual = proximo_id(tecnicos)
+    id_trabajo_actual = proximo_id(trabajos)
+
+    while True:
+        try:
+            opcion = pedir_opcion("========= MENÚ PRINCIPAL =========",
+                                  ["Clientes", "Trabajos", "Cobros",
+                                   "Técnicos", "Reportes y Consultas", "Salir"])
+            if opcion == "Clientes":
+                id_cliente_actual = modulo_clientes(id_cliente_actual)
+            elif opcion == "Trabajos":
+                id_trabajo_actual = modulo_trabajos(id_trabajo_actual)
+            elif opcion == "Cobros":
+                modulo_cobros()
+            elif opcion == "Técnicos":
+                id_tecnico_actual = modulo_tecnicos(id_tecnico_actual)
+            elif opcion == "Reportes y Consultas":
+                modulo_reportes()
+            elif opcion == "Salir":
+                print("Cerrando el sistema. ¡Hasta luego!")
+                break
+        
+        except Exception as error:
+            print("Ocurrió un error inesperado:", error)
+            print("El sistema sigue funcionando.")
+
+
+Programa_principal()
