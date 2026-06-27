@@ -7,10 +7,10 @@ from data import database
 
 def reporte_por_estado(estado):
     filtrados = [t for t in database.listTrabajos if t["estado"] == estado]
-    print('')
-    print("--- TRABAJOS:", estado.upper(), "---")
+    utilidades.printPausa('')
+    utilidades.printPausa("--- TRABAJOS:", estado.upper(), "---")
     if not filtrados:
-        print("No hay trabajos en este estado.")
+        utilidades.printPausa("No hay trabajos en este estado.")
         return
     for t in filtrados:
         trabajos.mostrar_trabajo(t)
@@ -18,17 +18,17 @@ def reporte_por_estado(estado):
 
 def reporte_cobros_pendientes():
     pendientes = [t for t in database.listTrabajos if t["estado_pago"] == "Pendiente"]
-    print('')
-    print('--- COBROS PENDIENTES ---')
+    utilidades.printPausa('')
+    utilidades.printPausa('--- COBROS PENDIENTES ---')
     if not pendientes:
-        print("No hay cobros pendientes. ¡Todo cobrado!")
+        utilidades.printPausa("No hay cobros pendientes. ¡Todo cobrado!")
         return
     total = 0.0
     for t in pendientes:
         trabajos.mostrar_trabajo(t)
         total += t["importe"]
-    print('')
-    print("TOTAL PENDIENTE DE COBRO: $", total)
+    utilidades.printPausa('')
+    utilidades.printPausa("TOTAL PENDIENTE DE COBRO: $", total)
 
 
 def modulo_reportes():
